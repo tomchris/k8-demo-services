@@ -1,0 +1,37 @@
+# This Example builds a k8 nginx service and deployment
+# The service exposes the nginx container on port 8080 and loadbalances request to the containers
+# The Deployment creates multiple replicas
+# The image used includes a default website that displays Server address, Server Name, Date, URI folder.
+#
+# To demonstrate this:
+#     $ kubectl apply -f k8-replica-service-www.yaml
+#     Browser to 127.0.0.1:8080
+#     to demonstrate that there are multiple hosts:
+#     $ watch "curl -s http://127.0.0.1:8080 | grep address"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: www}
+spec:
+  selector: {matchLabels: {name: www}}
+  replicas: 5
+  template: 
+    metadata: {labels: {name: www}}
+    spec:
+      containers:
+        - name: www
+          image: nginxdemos/hello 
+          ports:
+            - name: http
+              containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata: {name: www}
+spec:
+  selector: {name: www}
+  type: LoadBalancer
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
