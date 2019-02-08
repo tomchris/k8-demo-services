@@ -11,7 +11,10 @@
 ---
 apiVersion: apps/v1
 kind: Deployment
-metadata: {name: www}
+metadata: 
+  name: www
+  namespace: www-test
+
 spec:
   selector: {matchLabels: {name: www}}
   replicas: 5
@@ -27,7 +30,9 @@ spec:
 ---
 apiVersion: v1
 kind: Service
-metadata: {name: www}
+metadata: 
+  name: www
+  namespace: www-test
 spec:
   selector: {name: www}
   type: LoadBalancer
