@@ -1,0 +1,6 @@
+#!/bin/bash
+
+kubectl get -n demo-guestbook-app
+kubectl create ns demo-guestbook-app
+kubectl --namespace=demo-guestbook-app apply -f ~/Development/k8-demo-services/guestbook-webapp-demo.yaml
+kubectl get all -n demo-guestbook-app

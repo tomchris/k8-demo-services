@@ -1,0 +1,105 @@
+
+#StorageClass
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: default-sc
+  annotations:
+    storageclass.kubernetes.io/is-default-class: 'true'
+provisioner: kubernetes.io/cinder
+parameters:
+  availability: nova
+
+## Test PVC
+vi test-pvc.yml
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: myclaim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 1Gi
+
+kubectl apply -f test-pvc.yml
+kubectl get pvc
+kubectl describe pvc
+kubectl delete pvc myclaim
+
+## Install MetalLB
+`kubectl apply -f https://raw.githubusercontent.com/google/metallb/v0.7.3/manifests/metallb.yaml`
+`vi metallbconfig.yml`
+```
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: metallb-system
+  name: config
+data:
+  config: |
+    address-pools:
+    - name: default
+      protocol: layer2
+      addresses:
+      - 10.246.52.200-10.246.52.210
+```
+`kubectl apply -f metallbconfig.yaml`
+`kubectl get services --all-namespaces`
+
+## Test Deployment
+`vi test-deploy.yml`
+```
+#cat test-deploy.yml
+# This Example builds a k8 nginx service and deployment
+# The service exposes the nginx container on port 8080 and loadbalances request to the containers
+# The Deployment creates multiple replicas
+# The image used includes a default website that displays Server address, Server Name, Date, URI folder.
+#
+# To demonstrate this:
+#     $ kubectl apply -f k8-replica-service-www.yaml
+#     Browser to 127.0.0.1:8080
+#     to demonstrate that there are multiple hosts:
+#     $ watch "curl -s http://127.0.0.1:8080 | grep address"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: www
+  namespace: default 
+spec:
+  selector: {matchLabels: {name: www}}
+  replicas: 5
+  template:
+    metadata: {labels: {name: www}}
+    spec:
+      containers:
+        - name: www
+          image: nginxdemos/hello
+          ports:
+            - name: http
+              containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: www
+  namespace: default 
+spec:
+  selector: {name: www}
+  type: LoadBalancer
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+```
+
+`kubectl apply -f test-deploy.yml`
+`kubectl get services --all-namespaces`
+`kubectl get pods --all-namespaces`
+`kubectl run bb --image=busybox -- sleep 6000`
+`kubectl get pods --all-namespaces`
+`kubectl exec -it bb-66b8b77548-7g5vp sh`
+
