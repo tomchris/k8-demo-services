@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: test-stateset 
-  namespace: default
+  namespace: test-stateset 
 spec:
   replicas: 3
   selector:
